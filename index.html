@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extract PDF Pages</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Load pdf-lib for Editing PDFs -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    
+    <!-- Load pdf.js for rendering actual page previews -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+</head>
+<body>
+    <div class="app-wrapper">
+        <div class="container">
+            <header>
+                <h1>📄 Extract PDF Pages</h1>
+                <p>Upload a PDF, select the pages you want to keep, and extract them.</p>
+            </header>
+            
+            <div class="upload-area" id="upload-area">
+                <input type="file" id="file-input" accept="application/pdf" style="display: none;">
+                <button class="upload-btn" id="choose-btn">Choose PDF</button>
+                <p>or drag and drop your file here</p>
+            </div>
+
+            <!-- Action bar for extracting -->
+            <div id="action-bar" style="display: none;" class="action-bar">
+                <h3>Select the pages below that you want to extract.</h3>
+                <p id="status-text">0 pages selected for extraction.</p>
+                
+                <div class="extract-buttons">
+                    <button id="extract-single-btn" class="final-btn btn-single">📦 Extract as Single PDF</button>
+                    <button id="extract-individual-btn" class="final-btn btn-individual">📑 Extract as Individual PDFs</button>
+                </div>
+                <hr class="divider">
+            </div>
+
+            <!-- Output grid will display a card for each page -->
+            <div id="output-container" class="output-grid"></div>
+        </div>
+    </div>
+
+    <!-- Processing Modal -->
+    <div class="modal" id="processing-modal">
+        <div class="modal-content">
+            <div class="loader"></div>
+            <h2>Processing...</h2>
+            <p>Please wait while we read your pages.</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
