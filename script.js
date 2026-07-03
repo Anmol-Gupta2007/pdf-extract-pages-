@@ -1,5 +1,5 @@
 // Global State
-let originalFileBytes = null;
+let uploadedFile = null; // Store the File object directly instead of the buffer
 let originalFileName = "";
 let totalPages = 0;
 let selectedPages = new Set(); // Keeps track of pages chosen to extract
@@ -70,21 +70,23 @@ async function processFile(file) {
     }
 
     modal.style.display = 'flex';
+    
+    uploadedFile = file; // Save the file object directly
     originalFileName = file.name.replace('.pdf', '');
     selectedPages.clear(); 
 
     try {
-        originalFileBytes = await file.arrayBuffer();
+        // Read a fresh buffer just to get the page count
+        const arrayBuffer = await uploadedFile.arrayBuffer();
         
-        // 1. Get total pages using pdf-lib
         const { PDFDocument } = PDFLib;
-        const pdfDoc = await PDFDocument.load(originalFileBytes);
+        const pdfDoc = await PDFDocument.load(arrayBuffer);
         totalPages = pdfDoc.getPageCount();
         
         actionBar.style.display = 'block';
         updateStatusText();
         
-        // 2. Render visual previews using pdf.js
+        // Render visual previews
         await renderPreviews();
 
     } catch (error) {
@@ -99,7 +101,9 @@ async function processFile(file) {
 async function renderPreviews() {
     outputContainer.innerHTML = '';
 
-    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(originalFileBytes) });
+    // Read a fresh buffer for PDF.js to use so it doesn't detach our main one
+    const previewBuffer = await uploadedFile.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(previewBuffer) });
     const pdfViewerDoc = await loadingTask.promise;
 
     for (let i = 0; i < totalPages; i++) {
@@ -173,7 +177,7 @@ function updateStatusText() {
 
 // --- OPTION 1: Extract as Single PDF ---
 extractSingleBtn.addEventListener('click', async () => {
-    if (!originalFileBytes || selectedPages.size === 0) {
+    if (!uploadedFile || selectedPages.size === 0) {
         alert("Please select at least one page to extract.");
         return;
     }
@@ -181,8 +185,11 @@ extractSingleBtn.addEventListener('click', async () => {
     modal.style.display = 'flex';
 
     try {
+        // Fetch a fresh arrayBuffer from the file right when we need it
+        const arrayBuffer = await uploadedFile.arrayBuffer();
+        
         const { PDFDocument } = PDFLib;
-        const originalDoc = await PDFDocument.load(originalFileBytes);
+        const originalDoc = await PDFDocument.load(arrayBuffer);
         const newDoc = await PDFDocument.create();
         
         // Convert Set to Array and sort numerically so pages stay in original order
@@ -196,7 +203,7 @@ extractSingleBtn.addEventListener('click', async () => {
         
     } catch (error) {
         console.error("Error extracting PDF:", error);
-        alert("Failed to extract pages.");
+        alert(`Failed to extract pages. Error: ${error.message}`);
     }
     
     modal.style.display = 'none';
@@ -204,7 +211,7 @@ extractSingleBtn.addEventListener('click', async () => {
 
 // --- OPTION 2: Extract as Individual PDFs ---
 extractIndividualBtn.addEventListener('click', async () => {
-    if (!originalFileBytes || selectedPages.size === 0) {
+    if (!uploadedFile || selectedPages.size === 0) {
         alert("Please select at least one page to extract.");
         return;
     }
@@ -212,8 +219,11 @@ extractIndividualBtn.addEventListener('click', async () => {
     modal.style.display = 'flex';
 
     try {
+        // Fetch a fresh arrayBuffer from the file
+        const arrayBuffer = await uploadedFile.arrayBuffer();
+
         const { PDFDocument } = PDFLib;
-        const originalDoc = await PDFDocument.load(originalFileBytes);
+        const originalDoc = await PDFDocument.load(arrayBuffer);
         
         const indicesToExtract = Array.from(selectedPages).sort((a, b) => a - b);
 
@@ -233,7 +243,7 @@ extractIndividualBtn.addEventListener('click', async () => {
         
     } catch (error) {
         console.error("Error extracting PDF:", error);
-        alert("Failed to extract pages individually.");
+        alert(`Failed to extract pages individually. Error: ${error.message}`);
     }
     
     modal.style.display = 'none';
